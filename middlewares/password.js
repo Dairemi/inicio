@@ -1,0 +1,46 @@
+//const { log } = require("console");
+var crypto = require("crypto");
+
+function generarPassword(password){
+    var salt=crypto.randomBytes(32).toString("hex");
+    var hash=crypto.scryptSync(password,salt,100000,64,'sha512').toString("hex");
+    return{
+        salt,
+        hash
+    }
+}
+
+function validarPassword(password,hash,salt){
+    var hashValidar=crypto.scryptSync(password,salt,100000,64,'sha512').toString("hex");
+    return hashValidar===hash
+}
+
+function autorizado(req,res,siguiente){
+    console.log("No autorizado");
+    if(req.session.usuario || req.session.admin){
+        siguiente();
+    }else{
+        console.log("autorizado");
+        res.redirect("/login");
+    }
+}
+
+function admin(req,res,siguiente){
+    console.log("administrador autorizado");
+    if(req.session.admin){
+        siguiente();
+    }else{
+        if(req.session.usuario){
+            req.redirect("/");
+        }else{
+            res.redirect("/login");
+        }
+    } 
+}
+
+module.exports={
+    generarPassword,
+    validarPassword,
+    autorizado,
+    admin
+}
